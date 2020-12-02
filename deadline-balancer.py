@@ -19,8 +19,9 @@ class DeadlineBalancer(DeadlineEventListener):
 
     def Cleanup(self):
         del self.OnJobSubmittedCallback
+        del self.OnHouseCleaningCallback
 
-    def OnJobSubmitted(self):
+    def OnJobSubmitted(self, job):
         self.Balance()
 
     def OnHouseCleaning(self):
@@ -76,24 +77,34 @@ class DeadlineBalancer(DeadlineEventListener):
             else:
                 workers = math.ceil(percent * workersN)
 
+            print("Handing %s over to %s" % (workers, job))
+            RepositoryUtils.SetMachineLimitMaximum(job.JobId, workers)
+            job.MachineLimit = workers
+
             # check if job has rendering frames that are less than applicable amount of workers
             frames = job.JobRenderingTasks + job.JobQueuedTasks
             if frames < workers:
                 skipJobs.append(job)
                 reusableWorkers += workers - frames
                 workers = frames
-
-            print("Handing %s over to %s" % (workers, job))
-            RepositoryUtils.SetMachineLimitMaximum(job.JobId, workers)
+                print(
+                    "Detected fewer frames than handed workers. Handing %s over to %s"
+                    % (workers, job)
+                )
+                job.MachineLimit = workers
+                RepositoryUtils.SetMachineLimitMaximum(job.JobId, workers)
 
         # redistribute reusable workers
         for job in jobs:
             if job in skipJobs:
                 continue
 
-            # calculate the new amount
-            percent = float(job.JobPriority) / float(totalPriority)
-            workers = math.ceil(percent * reusableWorkers)
+            if reusableWorkers > 0:
+                # calculate the new amount
+                percent = float(job.JobPriority) / float(totalPriority)
+                workers = math.ceil(percent * reusableWorkers)
 
-            print("Handing %s extra workers to %s" % (workers, job))
-            RepositoryUtils.SetMachineLimitMaximum(job.JobId, workers)
+                print("Handing %s extra workers to %s" % (workers, job))
+                RepositoryUtils.SetMachineLimitMaximum(
+                    job.JobId, job.MachineLimit + workers
+                )
