@@ -27,7 +27,7 @@ class DeadlineBalancer(DeadlineEventListener):
             RepositoryUtils.SetMachineLimitMaximum(
                 job.JobId, int(license_limit)
             )
-        self.Balance()
+        self.balance()
 
     def on_house_cleaning(self):
         """Will perform on house cleaning a balance for
