@@ -4,4 +4,4 @@ Script to automatically balance all jobs rendering according to their priority. 
 There is also a license limit function (`LicenseLimit`), which will prevent the job from rendering with too many pc's at the same time when licensing is limited.
 
 ## Installation
-Copy this repository into the events `custom/events/` folder
+Copy this repository into the `/custom/events/` folder
